@@ -18,6 +18,7 @@ import {
   selectedMentions,
 } from "@/lib/chat-mentions";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-provider";
 
 type Props = Omit<React.ComponentProps<"textarea">, "value" | "onChange" | "ref"> & {
   value: string;
@@ -26,6 +27,7 @@ type Props = Omit<React.ComponentProps<"textarea">, "value" | "onChange" | "ref"
 };
 
 export function MentionTextarea({ value, onValueChange, onKeyDown, className, inputGroup, disabled, ...props }: Props) {
+  const { t: ui } = useLocale();
   const textarea = React.useRef<HTMLTextAreaElement>(null);
   const composing = React.useRef(false);
   const pendingKeyboardIndex = React.useRef<number | null>(null);
@@ -198,7 +200,7 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
               value={value}
               disabled={disabled}
               className={className}
-              aria-label={props["aria-label"] ?? "消息，输入 @ 引用记录"}
+              aria-label={props["aria-label"] ?? ui("消息，输入 @ 引用记录")}
               aria-autocomplete="list"
               aria-controls={open ? listId : undefined}
               aria-expanded={open}
@@ -230,20 +232,20 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
           onInteractOutside={(event) => {
             if (event.target === textarea.current) event.preventDefault();
           }}
-          aria-label="选择引用记录"
+          aria-label={ui("选择引用记录")}
         >
           <div className="flex items-center justify-between px-2 py-1 text-muted-foreground text-xs">
             <span>
               {categories.length
-                ? "选择引用类型"
-                : `搜索${mentionKinds.find((kind) => kind.kind === search.kind)?.label ?? "全部记录"}`}
+                ? ui("选择引用类型")
+                : ui("搜索{0}", mentionKinds.find((kind) => kind.kind === search.kind)?.label ?? ui("全部记录"))}
             </span>
-            <span>↑↓ 选择 · Enter 确认 · Esc 关闭</span>
+            <span>{ui("↑↓ 选择 · Enter 确认 · Esc 关闭")}</span>
           </div>
           <div
             id={listId}
             role="listbox"
-            aria-label="引用候选"
+            aria-label={ui("引用候选")}
             className="max-h-60 overflow-y-auto"
             onScroll={(event) => {
               const list = event.currentTarget;
@@ -265,25 +267,19 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
                 onClick={() => choose(index)}
               >
                 <AtSignIcon className="size-4 text-muted-foreground" />
-                <span>{kind.label}</span>
+                <span>{ui(kind.label)}</span>
                 <ChevronRightIcon className="ml-auto size-4 text-muted-foreground" />
               </button>
             ))}
             {!categories.length && loading && (
               <div role="status" className="flex items-center gap-2 p-3 text-muted-foreground text-sm">
-                <Loader2Icon className="size-4 animate-spin" />
-                搜索中…
-              </div>
+                <Loader2Icon className="size-4 animate-spin" />{ui("搜索中…")}</div>
             )}
             {!categories.length && !loading && error && (
-              <div role="alert" className="p-3 text-destructive text-sm">
-                搜索失败：{error}。请重新输入重试。
-              </div>
+              <div role="alert" className="p-3 text-destructive text-sm">{ui("搜索失败：")}{error}{ui("。请重新输入重试。")}</div>
             )}
             {!categories.length && !loading && !error && !items.length && (
-              <div role="status" className="p-3 text-muted-foreground text-sm">
-                没有匹配记录，请更换名称、地址或 ID
-              </div>
+              <div role="status" className="p-3 text-muted-foreground text-sm">{ui("没有匹配记录，请更换名称、地址或 ID")}</div>
             )}
             {items.map((item, index) => (
               <button
@@ -300,7 +296,7 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
                 onClick={() => choose(index)}
               >
                 <span className="flex w-full items-center gap-2">
-                  <Badge variant="outline">{mentionKinds.find((kind) => kind.kind === item.kind)?.label}</Badge>
+                  <Badge variant="outline">{ui(mentionKinds.find((kind) => kind.kind === item.kind)?.label ?? "")}</Badge>
                   <span className="truncate text-sm">{item.label}</span>
                   <span className="ml-auto shrink-0 text-muted-foreground text-xs">#{item.id}</span>
                 </span>
@@ -310,17 +306,17 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
           </div>
           {!categories.length && (
             <p className="px-2 py-1 text-muted-foreground text-xs">
-              {loadingMore && <span role="status">正在加载更多…</span>}
+              {loadingMore && <span role="status">{ui("正在加载更多…")}</span>}
               {!loadingMore && nextCursor && (
                 <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={loadMore}>
-                  {pageError ? "加载失败，点击重试" : `已显示 ${items.length} 条，向下滚动加载更多`}
+                  {pageError ? ui("加载失败，点击重试") : ui("已显示 {0} 条，向下滚动加载更多", items.length)}
                 </button>
               )}
-              {!loadingMore && !nextCursor && !loading && !error && items.length > 0 && `已显示全部 ${items.length} 条`}
+              {!loadingMore && !nextCursor && !loading && !error && items.length > 0 && ui("已显示全部 {0} 条", items.length)}
               {!loadingMore &&
                 !nextCursor &&
                 (loading || !!error || items.length === 0) &&
-                "输入名称、地址或 ID 搜索记录"}
+                ui("输入名称、地址或 ID 搜索记录")}
             </p>
           )}
         </PopoverContent>
@@ -335,7 +331,7 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
               <button
                 type="button"
                 disabled={disabled}
-                aria-label={`移除引用 ${item.label}`}
+                aria-label={ui("移除引用 {0}", item.label)}
                 onClick={() => {
                   onValueChange(value.slice(0, item.start) + value.slice(item.start + item.token.length));
                   setCursor(null);
@@ -345,7 +341,7 @@ export function MentionTextarea({ value, onValueChange, onKeyDown, className, in
               </button>
             </Badge>
           ))}
-          <span className="text-muted-foreground text-xs">发送时读取最新详情 · 最多 10 条</span>
+          <span className="text-muted-foreground text-xs">{ui("发送时读取最新详情 · 最多 10 条")}</span>
         </div>
       )}
     </div>

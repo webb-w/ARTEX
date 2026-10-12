@@ -1,5 +1,8 @@
 "use client";
 
+import type { Locale } from "@/lib/locale";
+
+
 import * as React from "react";
 
 import { RefreshCwIcon, RotateCcwIcon } from "lucide-react";
@@ -13,9 +16,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api } from "@/lib/api";
 import { statusMeta, toneClasses } from "@/lib/status";
 import type { NotificationChannel, NotificationDelivery } from "@/lib/types";
+import { useLocale, useUiEventTranslator } from "@/lib/locale-provider";
 
 // DeliveryList 是投递记录表：可按渠道与状态筛选，失败项可手动重发。
 export function DeliveryList({ channels }: { channels: NotificationChannel[] }) {
+  const { t: ui, locale } = useLocale();
+  const loadUi = useUiEventTranslator();
   const [rows, setRows] = React.useState<NotificationDelivery[]>([]);
   const [total, setTotal] = React.useState(0);
   const [page, setPage] = React.useState(1);
@@ -32,9 +38,9 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
         setRows(r.deliveries);
         setTotal(r.total);
       })
-      .catch((e) => toast.error("读取投递记录失败：" + (e as Error).message))
+      .catch((e) => toast.error(loadUi("读取投递记录失败：") + (e as Error).message))
       .finally(() => setLoading(false));
-  }, [channelID, state, page]);
+  }, [channelID, state, page, loadUi]);
   React.useEffect(() => {
     load();
   }, [load]);
@@ -42,10 +48,10 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
   async function retry(id: number) {
     try {
       await api.notifyRetryDelivery(id);
-      toast.success("已重新入队");
+      toast.success(ui("已重新入队"));
       load();
     } catch (e) {
-      toast.error("重发失败：" + (e as Error).message);
+      toast.error(ui("重发失败：") + (e as Error).message);
     }
   }
 
@@ -62,10 +68,10 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
           }}
         >
           <SelectTrigger size="sm" className="w-44">
-            <SelectValue placeholder="全部渠道" />
+            <SelectValue placeholder={ui("全部渠道")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部渠道</SelectItem>
+            <SelectItem value="all">{ui("全部渠道")}</SelectItem>
             {channels.map((c) => (
               <SelectItem key={c.id} value={String(c.id)}>
                 {c.name}
@@ -81,33 +87,32 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
           }}
         >
           <SelectTrigger size="sm" className="w-32">
-            <SelectValue placeholder="全部状态" />
+            <SelectValue placeholder={ui("全部状态")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部状态</SelectItem>
+            <SelectItem value="all">{ui("全部状态")}</SelectItem>
             {["pending", "sending", "sent", "failed", "skipped"].map((s) => (
               <SelectItem key={s} value={s}>
-                {statusMeta("delivery", s).label}
+                {statusMeta("delivery", s, locale).label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Button size="sm" variant="outline" onClick={load} disabled={loading}>
-          <RefreshCwIcon className={loading ? "animate-spin" : ""} /> 刷新
-        </Button>
-        <span className="text-muted-foreground ml-auto text-xs">共 {total} 条</span>
+          <RefreshCwIcon className={loading ? "animate-spin" : ""} />{ui(" 刷新")}</Button>
+        <span className="text-muted-foreground ml-auto text-xs">{ui("共 ")}{total}{ui(" 条")}</span>
       </div>
 
       <Card className="py-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-40">时间</TableHead>
-              <TableHead>漏洞</TableHead>
-              <TableHead className="w-40">渠道</TableHead>
-              <TableHead className="w-24">状态</TableHead>
-              <TableHead className="w-16">尝试</TableHead>
-              <TableHead>错误</TableHead>
+              <TableHead className="w-40">{ui("时间")}</TableHead>
+              <TableHead>{ui("漏洞")}</TableHead>
+              <TableHead className="w-40">{ui("渠道")}</TableHead>
+              <TableHead className="w-24">{ui("状态")}</TableHead>
+              <TableHead className="w-16">{ui("尝试")}</TableHead>
+              <TableHead>{ui("错误")}</TableHead>
               <TableHead className="w-20" />
             </TableRow>
           </TableHeader>
@@ -115,32 +120,30 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
             {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-muted-foreground py-8 text-center">
-                  {loading ? "加载中…" : "暂无投递记录"}
+                  {loading ? ui("加载中…") : ui("暂无投递记录")}
                 </TableCell>
               </TableRow>
             ) : (
               rows.map((d) => (
                 <TableRow key={d.id}>
                   <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                    {formatTime(d.created_at)}
+                    {formatTime(d.created_at, locale)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={toneClasses[statusMeta("severity", d.severity).tone]}>
-                        {statusMeta("severity", d.severity).label}
+                      <Badge variant="outline" className={toneClasses[statusMeta("severity", d.severity, locale).tone]}>
+                        {statusMeta("severity", d.severity, locale).label}
                       </Badge>
-                      <span className="truncate text-sm">{d.title || "（无标题）"}</span>
+                      <span className="truncate text-sm">{d.title || ui("（无标题）")}</span>
                       {d.event_kind === "finding_status_changed" && (
-                        <Badge variant="outline" className="shrink-0">
-                          状态变更
-                        </Badge>
+                        <Badge variant="outline" className="shrink-0">{ui("状态变更")}</Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">{d.channel_name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={toneClasses[statusMeta("delivery", d.state).tone]}>
-                      {statusMeta("delivery", d.state).label}
+                    <Badge variant="outline" className={toneClasses[statusMeta("delivery", d.state, locale).tone]}>
+                      {statusMeta("delivery", d.state, locale).label}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">{d.attempts}</TableCell>
@@ -149,8 +152,7 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
                     {/* 只有失败/跳过的才给重发入口：已送达的重发会造成重复推送。 */}
                     {(d.state === "failed" || d.state === "skipped") && (
                       <Button size="sm" variant="outline" onClick={() => retry(d.id)}>
-                        <RotateCcwIcon /> 重发
-                      </Button>
+                        <RotateCcwIcon />{ui(" 重发")}</Button>
                     )}
                   </TableCell>
                 </TableRow>
@@ -162,23 +164,19 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
 
       {maxPage > 1 && (
         <div className="flex items-center justify-end gap-2">
-          <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            上一页
-          </Button>
+          <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>{ui("上一页")}</Button>
           <span className="text-muted-foreground text-sm">
             {page} / {maxPage}
           </span>
-          <Button size="sm" variant="outline" disabled={page >= maxPage} onClick={() => setPage((p) => p + 1)}>
-            下一页
-          </Button>
+          <Button size="sm" variant="outline" disabled={page >= maxPage} onClick={() => setPage((p) => p + 1)}>{ui("下一页")}</Button>
         </div>
       )}
     </div>
   );
 }
 
-function formatTime(iso: string): string {
+function formatTime(iso: string, locale: Locale = "zh-CN"): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("zh-CN", { hour12: false });
+  return d.toLocaleString(locale, { hour12: false });
 }

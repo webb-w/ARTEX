@@ -8,6 +8,7 @@ import useEmblaCarousel, {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { useLocale } from "@/lib/locale-provider";
 
 type CarouselApi = UseEmblaCarouselType[1]
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
@@ -177,6 +178,7 @@ function CarouselPrevious({
   size = "icon-sm",
   ...props
 }: React.ComponentProps<typeof Button>) {
+  const { t: ui } = useLocale();
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
 
   return (
@@ -196,7 +198,7 @@ function CarouselPrevious({
       {...props}
     >
       <ChevronLeftIcon />
-      <span className="sr-only">Previous slide</span>
+      <span className="sr-only">{ui("Previous slide")}</span>
     </Button>
   )
 }
@@ -207,6 +209,7 @@ function CarouselNext({
   size = "icon-sm",
   ...props
 }: React.ComponentProps<typeof Button>) {
+  const { t: ui } = useLocale();
   const { orientation, scrollNext, canScrollNext } = useCarousel()
 
   return (
@@ -226,7 +229,7 @@ function CarouselNext({
       {...props}
     >
       <ChevronRightIcon />
-      <span className="sr-only">Next slide</span>
+      <span className="sr-only">{ui("Next slide")}</span>
     </Button>
   )
 }

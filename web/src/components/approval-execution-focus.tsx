@@ -4,6 +4,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { Activity, InterceptExecution } from "@/lib/types";
+import { useLocale } from "@/lib/locale-provider";
 
 // Resolve one exact persisted call, independently of transcript pagination.
 export function useApprovalFocus({ taskId, conversationId }: { taskId?: string; conversationId?: number }) {
@@ -108,6 +109,7 @@ export function ApprovalExecutionFocus({
   focus: ReturnType<typeof useApprovalFocus>;
   history: ReturnType<typeof useApprovalHistory>;
 }) {
+  const { t: ui } = useLocale();
   const { state } = focus;
   if (!state) return null;
   const error = state.error || history.error;
@@ -118,20 +120,16 @@ export function ApprovalExecutionFocus({
     >
       <span className={error ? "text-destructive" : "text-muted-foreground"}>
         {error
-          ? `无法定位：${error}`
+          ? ui("无法定位：{0}", error)
           : history.ready
-            ? `已展开审批 #${state.id} 对应的工具调用`
-            : `正在加载审批 #${state.id} 所在的对话位置…`}
+            ? ui("已展开审批 #{0} 对应的工具调用", state.id)
+            : ui("正在加载审批 #{0} 所在的对话位置…", state.id)}
       </span>
       <div className="flex gap-2">
         {error ? (
-          <Button size="sm" variant="outline" onClick={focus.retry}>
-            重试定位
-          </Button>
+          <Button size="sm" variant="outline" onClick={focus.retry}>{ui("重试定位")}</Button>
         ) : null}
-        <Button size="sm" variant="ghost" onClick={focus.close}>
-          取消定位
-        </Button>
+        <Button size="sm" variant="ghost" onClick={focus.close}>{ui("取消定位")}</Button>
       </div>
     </div>
   );

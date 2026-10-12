@@ -16,6 +16,7 @@ import { auth } from "@/lib/auth";
 import { cn, getInitials } from "@/lib/utils";
 
 import { ChangePasswordDialog } from "./change-password-dialog";
+import { useLocale } from "@/lib/locale-provider";
 
 export function AccountSwitcher({
   users,
@@ -28,6 +29,7 @@ export function AccountSwitcher({
     readonly role: string;
   }>;
 }) {
+  const { t: ui } = useLocale();
   const [activeUser, setActiveUser] = useState(users[0]);
   const [pwOpen, setPwOpen] = useState(false);
 
@@ -79,13 +81,9 @@ export function AccountSwitcher({
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setPwOpen(true)}>
-            <KeyRound />
-            修改密码
-          </DropdownMenuItem>
+            <KeyRound />{ui("修改密码")}</DropdownMenuItem>
           <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-            <LogOut />
-            退出登录
-          </DropdownMenuItem>
+            <LogOut />{ui("退出登录")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <ChangePasswordDialog open={pwOpen} onOpenChange={setPwOpen} />

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "@/lib/locale-provider";
+
 import * as React from "react";
 
 import { useRouter } from "next/navigation";
@@ -78,6 +80,7 @@ function groupBy(items: SearchItem[]) {
 }
 
 export function SearchDialog() {
+ const { t: ui } = useLocale();
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const router = useRouter();
@@ -112,17 +115,17 @@ export function SearchDialog() {
     groupBy(items).map(({ group, items: groupItems }, index) => (
       <React.Fragment key={group}>
         {index > 0 && <CommandSeparator />}
-        <CommandGroup heading={group}>
+        <CommandGroup heading={ui(group)}>
           {groupItems.map((item) => (
             <CommandItem
               disabled={item.disabled}
               key={`${group}-${item.id}`}
-              value={`${item.group} ${item.label}`}
+              value={`${ui(item.group)} ${ui(item.label)}`}
               onSelect={() => handleSelect(item)}
             >
               <span className="flex min-w-0 items-center gap-2">
                 {item.icon && <item.icon />}
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{ui(item.label)}</span>
               </span>
             </CommandItem>
           ))}
@@ -137,17 +140,15 @@ export function SearchDialog() {
         variant="link"
         className="px-0! font-normal text-muted-foreground hover:no-underline"
       >
-        <Search data-icon="inline-start" />
-        Search
-        <kbd className="inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium text-[10px]">
+        <Search data-icon="inline-start" />{ui("Search")}<kbd className="inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium text-[10px]">
           <span className="text-xs">⌘</span>J
         </kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={handleOpenChange}>
         <Command>
-          <CommandInput placeholder="Search dashboards, users, and more…" value={query} onValueChange={setQuery} />
+          <CommandInput placeholder={ui("Search dashboards, users, and more…")} value={query} onValueChange={setQuery} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{ui("No results found.")}</CommandEmpty>
             {query ? renderGroups(searchItems) : renderGroups(recommendations)}
           </CommandList>
         </Command>

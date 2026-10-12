@@ -27,6 +27,7 @@ import {
 import { api } from "@/lib/api";
 import type { CoverageAssetRef, CoverageAssetRefs, CoverageGraphEdge, CoverageGraphNode } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-provider";
 
 // 每个父节点下、同一类型的子节点默认展示的数量；超出折叠，"展示更多"每次再拉这么多。
 const FOLD_LIMIT = 20;
@@ -211,7 +212,7 @@ function graphLabel(n: CoverageGraphNode): string {
   return n.label;
 }
 
-function toG6Nodes(renderNodes: RenderNode[]): G6NodeDatum[] {
+function toG6Nodes(ui: import("@/lib/locale").UiTranslator, renderNodes: RenderNode[]): G6NodeDatum[] {
   return renderNodes.map((rn) => {
     if (rn.fold) {
       return {
@@ -220,7 +221,7 @@ function toG6Nodes(renderNodes: RenderNode[]): G6NodeDatum[] {
         fold: true,
         tested: false,
         inScope: false,
-        lbl: `还有 ${rn.hidden.length} 个${kindMeta[rn.kind].label}`,
+        lbl: ui("还有 {0} 个{1}", rn.hidden.length, ui(kindMeta[rn.kind].label)),
         size: 24,
       };
     }
@@ -230,7 +231,7 @@ function toG6Nodes(renderNodes: RenderNode[]): G6NodeDatum[] {
       fold: false,
       tested: rn.node.tested,
       inScope: rn.node.in_scope,
-      lbl: trunc(graphLabel(rn.node) || kindMeta[rn.kind].label),
+      lbl: trunc(graphLabel(rn.node) || ui(kindMeta[rn.kind].label)),
       size: kindMeta[rn.kind].size,
     };
   });
@@ -267,6 +268,7 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 }
 
 function RefList({ title, items }: { title: string; items: CoverageAssetRef[] }) {
+  const { t: ui } = useLocale();
   if (items.length === 0) return null;
   return (
     <div>
@@ -283,9 +285,7 @@ function RefList({ title, items }: { title: string; items: CoverageAssetRef[] })
             {r.state && <span className="shrink-0 text-muted-foreground">{r.state}</span>}
             <span className="min-w-32 flex-1 break-words text-foreground">{r.summary || "—"}</span>
             {r.inherited && r.source_task_id && (
-              <Badge variant="outline" className="shrink-0">
-                来源 #{r.source_task_id} · 只读
-              </Badge>
+              <Badge variant="outline" className="shrink-0">{ui("来源 #")}{r.source_task_id}{ui(" · 只读")}</Badge>
             )}
           </div>
         ))}
@@ -303,6 +303,7 @@ function AssetSheet({
   taskId: string;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t: ui } = useLocale();
   const meta = node ? kindMeta[node.kind] : null;
   const Icon = meta?.icon;
   const raw = node ? JSON.stringify(node, null, 2) : "";
@@ -335,7 +336,7 @@ function AssetSheet({
                   <Icon className="size-4 text-white" />
                 </span>
                 <div className="min-w-0">
-                  <SheetTitle className="leading-tight">{meta.label}</SheetTitle>
+                  <SheetTitle className="leading-tight">{ui(meta.label)}</SheetTitle>
                   <span className="text-muted-foreground truncate font-mono text-xs" title={node.label}>
                     {node.label}
                   </span>
@@ -345,42 +346,42 @@ function AssetSheet({
             <ScrollArea className="min-h-0 flex-1">
               <div className="flex w-full min-w-0 flex-col gap-4 p-4">
                 <section>
-                  <h4 className="text-muted-foreground mb-1 text-xs font-medium">属性</h4>
-                  <DetailRow label="类型">{meta.label}</DetailRow>
-                  <DetailRow label="测试状态">
+                  <h4 className="text-muted-foreground mb-1 text-xs font-medium">{ui("属性")}</h4>
+                  <DetailRow label={ui("类型")}>{ui(meta.label)}</DetailRow>
+                  <DetailRow label={ui("测试状态")}>
                     {node.in_scope ? (
                       node.tested ? (
-                        <span className="text-emerald-600 dark:text-emerald-400">已测试</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">{ui("已测试")}</span>
                       ) : (
-                        <span className="text-neutral-500">未测试</span>
+                        <span className="text-neutral-500">{ui("未测试")}</span>
                       )
                     ) : (
-                      <span className="text-neutral-400">范围外（连接节点）</span>
+                      <span className="text-neutral-400">{ui("范围外（连接节点）")}</span>
                     )}
                   </DetailRow>
-                  <DetailRow label="域名">{node.domain}</DetailRow>
-                  <DetailRow label="根域名">{node.root_domain}</DetailRow>
+                  <DetailRow label={ui("域名")}>{node.domain}</DetailRow>
+                  <DetailRow label={ui("根域名")}>{node.root_domain}</DetailRow>
                   <DetailRow label="IP">{node.ip}</DetailRow>
-                  <DetailRow label="端口">{node.port ? node.port : undefined}</DetailRow>
+                  <DetailRow label={ui("端口")}>{node.port ? node.port : undefined}</DetailRow>
                   <DetailRow label="URL">
                     {node.url ? <span className="font-mono text-xs break-all">{node.url}</span> : undefined}
                   </DetailRow>
-                  <DetailRow label="标题">{node.page_title}</DetailRow>
-                  <DetailRow label="状态码">{node.status_code ? node.status_code : undefined}</DetailRow>
-                  <DetailRow label="App">{node.app_name}</DetailRow>
-                  <DetailRow label="资产ID">
+                  <DetailRow label={ui("标题")}>{node.page_title}</DetailRow>
+                  <DetailRow label={ui("状态码")}>{node.status_code ? node.status_code : undefined}</DetailRow>
+                  <DetailRow label={ui("App")}>{node.app_name}</DetailRow>
+                  <DetailRow label={ui("资产ID")}>
                     {node.asset_id ? <span className="font-mono text-xs">{node.asset_id}</span> : undefined}
                   </DetailRow>
                 </section>
                 {refs && (refs.intents.length > 0 || refs.facts.length > 0 || refs.findings.length > 0) && (
                   <section className="flex flex-col gap-3 border-t pt-3">
-                    <RefList title="关联意图" items={refs.intents} />
-                    <RefList title="关联事实" items={refs.facts} />
-                    <RefList title="关联发现" items={refs.findings} />
+                    <RefList title={ui("关联意图")} items={refs.intents} />
+                    <RefList title={ui("关联事实")} items={refs.facts} />
+                    <RefList title={ui("关联发现")} items={refs.findings} />
                   </section>
                 )}
                 <section className="border-t pt-3">
-                  <h4 className="text-muted-foreground mb-1.5 text-xs font-medium">原始数据</h4>
+                  <h4 className="text-muted-foreground mb-1.5 text-xs font-medium">{ui("原始数据")}</h4>
                   <pre className="bg-muted/50 text-foreground max-w-full overflow-hidden rounded-md border p-3 font-mono text-xs leading-relaxed break-all whitespace-pre-wrap">
                     {raw}
                   </pre>
@@ -405,6 +406,7 @@ function FoldSheet({
   onShowMore: (groupId: string) => void;
   onPick: (n: CoverageGraphNode) => void;
 }) {
+  const { t: ui } = useLocale();
   const meta = fold ? kindMeta[fold.kind] : null;
   const Icon = meta?.icon;
   return (
@@ -413,10 +415,9 @@ function FoldSheet({
         {fold && meta && Icon && (
           <>
             <SheetHeader className="border-b p-4">
-              <SheetTitle className="text-base">
-                未展示的{meta.label}（{fold.hidden.length}）
+              <SheetTitle className="text-base">{ui("未展示的")}{ui(meta.label)}（{fold.hidden.length}）
               </SheetTitle>
-              <p className="text-muted-foreground text-xs">已测优先展示。点「展示更多」把下一批拉进图里。</p>
+              <p className="text-muted-foreground text-xs">{ui("已测优先展示。点「展示更多」把下一批拉进图里。")}</p>
             </SheetHeader>
             <ScrollArea className="min-h-0 flex-1">
               <div className="flex flex-col gap-1 p-3">
@@ -444,8 +445,7 @@ function FoldSheet({
               </div>
             </ScrollArea>
             <div className="border-t p-3">
-              <Button className="w-full" variant="outline" onClick={() => onShowMore(fold.groupId)}>
-                展示更多（+{FOLD_STEP}）
+              <Button className="w-full" variant="outline" onClick={() => onShowMore(fold.groupId)}>{ui("展示更多（+")}{FOLD_STEP}）
               </Button>
             </div>
           </>
@@ -457,6 +457,7 @@ function FoldSheet({
 
 // ---------------------------------------------------------------------------
 function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; coverageEnabled?: boolean }) {
+  const { t: ui } = useLocale();
   const [data, setData] = React.useState<{
     nodes: CoverageGraphNode[];
     edges: CoverageGraphEdge[];
@@ -503,16 +504,16 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
     [data, expanded],
   );
 
-  // 结构签名：只在可见节点/边集合变化时重建图 + 重跑布局，避免无谓抖动。
+  // The render signature tracks visible graph structure and UI language.
   const sig = React.useMemo(
     () =>
-      `${renderNodes.map((n) => `${n.key}:${n.fold ? "f" : n.node.tested ? "t" : "u"}`).sort().join(",")}|${renderEdges.length}`,
-    [renderNodes, renderEdges],
+      `${ui("资产覆盖图")}:${renderNodes.map((n) => `${n.key}:${n.fold ? "f" : n.node.tested ? "t" : "u"}`).sort().join(",")}|${renderEdges.length}`,
+    [renderNodes, renderEdges, ui],
   );
 
   // 维护 gDataRef + renderMapRef（供事件与图数据应用读取）。
   gDataRef.current = {
-    nodes: toG6Nodes(renderNodes),
+    nodes: toG6Nodes(ui, renderNodes),
     edges: renderEdges.map((e) => ({ source: e.src, target: e.dst })),
   };
   const rmap = new Map<string, RenderNode>();
@@ -643,20 +644,18 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
       <div className="bg-card/95 pointer-events-auto absolute top-3 left-3 flex max-w-[340px] flex-col gap-2.5 rounded-lg border p-3 text-xs shadow-sm backdrop-blur">
         <div className="flex items-center justify-between gap-3">
           {total > 0 ? (
-            <span className="text-muted-foreground">
-              范围内 <span className="text-foreground font-semibold tabular-nums">{inScope}</span>
+            <span className="text-muted-foreground">{ui("范围内 ")}<span className="text-foreground font-semibold tabular-nums">{inScope}</span>
               {coverageEnabled && (
                 <>
-                  {" "}
-                  · 已测{" "}
+                  {" "}{ui("· 已测")}{" "}
                   <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{tested}</span>
                 </>
               )}
             </span>
           ) : (
-            <span className="text-muted-foreground">{loading ? "加载中…" : "暂无范围内资产（先锚定任务范围）"}</span>
+            <span className="text-muted-foreground">{loading ? ui("加载中…") : ui("暂无范围内资产（先锚定任务范围）")}</span>
           )}
-          <Button variant="ghost" size="icon" className="size-6" onClick={fetchGraph} title="刷新">
+          <Button variant="ghost" size="icon" className="size-6" onClick={fetchGraph} title={ui("刷新")}>
             <RefreshCw className={cn("size-3.5", loading && "animate-spin")} />
           </Button>
         </div>
@@ -669,7 +668,7 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
                 <span className={cn("flex size-4 items-center justify-center rounded", m.iconBg)}>
                   <Icon className="size-2.5 text-white" />
                 </span>
-                {m.label}
+                {ui(m.label)}
               </span>
             );
           })}
@@ -678,20 +677,15 @@ function GraphInner({ taskId, coverageEnabled = true }: { taskId: string; covera
           {coverageEnabled && (
             <>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-3 rounded-full bg-emerald-500" /> 已测（高亮）
-              </span>
+                <span className="size-3 rounded-full bg-emerald-500" />{ui(" 已测（高亮）")}</span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-3 rounded-full bg-neutral-400" /> 未测
-              </span>
+                <span className="size-3 rounded-full bg-neutral-400" />{ui(" 未测")}</span>
             </>
           )}
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-3 rounded-full border border-dashed border-neutral-400 bg-neutral-200" /> 范围外
-          </span>
+            <span className="size-3 rounded-full border border-dashed border-neutral-400 bg-neutral-200" />{ui(" 范围外")}</span>
         </div>
-        <p className="text-muted-foreground/80 border-border/60 border-t pt-2 leading-relaxed">
-          力导向布局，可拖拽节点、滚轮缩放；灰色「⋯」是折叠节点，点开可展开更多。
-        </p>
+        <p className="text-muted-foreground/80 border-border/60 border-t pt-2 leading-relaxed">{ui("力导向布局，可拖拽节点、滚轮缩放；灰色「⋯」是折叠节点，点开可展开更多。")}</p>
       </div>
 
       <AssetSheet node={selectedAsset} taskId={taskId} onOpenChange={(o) => !o && setSelectedAsset(null)} />

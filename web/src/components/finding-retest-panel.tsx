@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api";
 import type { FindingRetest } from "@/lib/types";
+import { useLocale } from "@/lib/locale-provider";
 
 const statusLabels = {
   pending: "等待启动",
@@ -42,6 +43,7 @@ export function FindingRetestPanel({
   readOnly?: boolean;
   onCompleted?: () => void;
 }) {
+  const { t: ui, locale } = useLocale();
   const [items, setItems] = React.useState<FindingRetest[] | null>(null);
   const [error, setError] = React.useState("");
   const [open, setOpen] = React.useState(false);
@@ -84,32 +86,25 @@ export function FindingRetestPanel({
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1.5">
-          <CardTitle>漏洞复测</CardTitle>
-          <CardDescription>在独立会话中验证当前状态，保留每次复测的结论与证据。</CardDescription>
+          <CardTitle>{ui("漏洞复测")}</CardTitle>
+          <CardDescription>{ui("在独立会话中验证当前状态，保留每次复测的结论与证据。")}</CardDescription>
         </div>
         {running?.conversation_id != null ? (
           <Button asChild variant="outline" size="sm">
-            <Link href={`/chat?c=${running.conversation_id}`} title="查看正在进行的复测会话">
-              <Spinner data-icon="inline-start" aria-hidden="true" />
-              复测中
-            </Link>
+            <Link href={`/chat?c=${running.conversation_id}`} title={ui("查看正在进行的复测会话")}>
+              <Spinner data-icon="inline-start" aria-hidden="true" />{ui("复测中")}</Link>
           </Button>
         ) : null}
         {!running && !readOnly ? (
           <Button size="sm" onClick={() => setOpen(true)} disabled={items === null || !!error}>
-            <RotateCcwIcon data-icon="inline-start" />
-            发起复测
-          </Button>
+            <RotateCcwIcon data-icon="inline-start" />{ui("发起复测")}</Button>
         ) : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {error ? (
           <Alert variant="destructive">
-            <AlertDescription>
-              加载复测记录失败：{error}
-              <Button variant="outline" size="sm" onClick={() => void load()}>
-                重试
-              </Button>
+            <AlertDescription>{ui("加载复测记录失败：")}{error}
+              <Button variant="outline" size="sm" onClick={() => void load()}>{ui("重试")}</Button>
             </AlertDescription>
           </Alert>
         ) : null}
@@ -117,8 +112,8 @@ export function FindingRetestPanel({
         {!error && items?.length === 0 ? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>暂无复测记录</EmptyTitle>
-              <EmptyDescription>修复部署完成后，可发起复测并比较新旧证据。</EmptyDescription>
+              <EmptyTitle>{ui("暂无复测记录")}</EmptyTitle>
+              <EmptyDescription>{ui("修复部署完成后，可发起复测并比较新旧证据。")}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : null}
@@ -130,18 +125,18 @@ export function FindingRetestPanel({
                     variant={item.status === "completed" && item.verdict === "reproduced" ? "destructive" : "secondary"}
                   >
                     {item.status === "completed" && item.verdict
-                      ? verdictLabels[item.verdict]
-                      : statusLabels[item.status]}
+                      ? (Object.hasOwn(verdictLabels, item.verdict) ? ui(verdictLabels[item.verdict]) : item.verdict)
+                      : (Object.hasOwn(statusLabels, item.status) ? ui(statusLabels[item.status]) : item.status)}
                   </Badge>
                   <span className="text-muted-foreground text-xs">
-                    #{item.id} · {new Date(item.created_at).toLocaleString("zh-CN")}
+                    #{item.id} · {new Date(item.created_at).toLocaleString(locale)}
                   </span>
                   {item.conversation_id != null ? (
                     <Button asChild variant="ghost" size="sm" className="ml-auto">
-                      <Link href={`/chat?c=${item.conversation_id}`}>查看会话</Link>
+                      <Link href={`/chat?c=${item.conversation_id}`}>{ui("查看会话")}</Link>
                     </Button>
                   ) : (
-                    <span className="text-muted-foreground text-xs">会话已删除</span>
+                    <span className="text-muted-foreground text-xs">{ui("会话已删除")}</span>
                   )}
                 </div>
                 {item.status === "completed" && item.summary ? (
@@ -151,13 +146,12 @@ export function FindingRetestPanel({
                   <p className="whitespace-pre-wrap break-words text-destructive text-sm">{item.error}</p>
                 ) : null}
                 {item.notes ? (
-                  <p className="whitespace-pre-wrap break-words text-muted-foreground text-xs">
-                    补充说明：{item.notes}
+                  <p className="whitespace-pre-wrap break-words text-muted-foreground text-xs">{ui("补充说明：")}{item.notes}
                   </p>
                 ) : null}
                 {item.status === "completed" && item.evidence ? (
                   <details className="min-w-0">
-                    <summary className="cursor-pointer text-sm">复测证据</summary>
+                    <summary className="cursor-pointer text-sm">{ui("复测证据")}</summary>
                     <div className="mt-3 overflow-x-auto">
                       <Markdown text={item.evidence} />
                     </div>

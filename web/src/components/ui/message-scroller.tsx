@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ArrowDownIcon } from "lucide-react"
+import { useLocale } from "@/lib/locale-provider";
 
 function MessageScrollerProvider(
   props: React.ComponentProps<typeof MessageScrollerPrimitive.Provider>
@@ -91,6 +92,7 @@ function MessageScrollerButton({
   ...props
 }: React.ComponentProps<typeof MessageScrollerPrimitive.Button> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+  const { t: ui } = useLocale();
   return (
     <MessageScrollerPrimitive.Button
       data-slot="message-scroller-button"
@@ -110,7 +112,7 @@ function MessageScrollerButton({
           <ArrowDownIcon
           />
           <span className="sr-only">
-            {direction === "end" ? "Scroll to end" : "Scroll to start"}
+            {direction === "end" ? ui("Scroll to end") : ui("Scroll to start")}
           </span>
         </>
       )}

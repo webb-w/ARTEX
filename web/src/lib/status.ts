@@ -1,6 +1,8 @@
 // Centralised status → color/label semantics, reused across the whole app.
 // Spec §8.3: 意图 / 覆盖 / 任务 / 严重度 each have a consistent color set.
 
+import { type Locale, translateUi } from "./locale";
+
 export type Tone = "neutral" | "blue" | "green" | "amber" | "red" | "rose" | "violet" | "slate";
 
 export const toneClasses: Record<Tone, string> = {
@@ -123,6 +125,7 @@ const maps = {
 
 export type StatusDomain = keyof typeof maps;
 
-export function statusMeta(domain: StatusDomain, key: string): StatusMeta {
-  return maps[domain][key] ?? { label: key, tone: "neutral" };
+export function statusMeta(domain: StatusDomain, key: string, locale: Locale = "zh-CN"): StatusMeta {
+  const meta = Object.hasOwn(maps[domain], key) ? maps[domain][key] : undefined;
+  return meta ? { ...meta, label: translateUi(locale, meta.label) } : { label: key, tone: "neutral" };
 }

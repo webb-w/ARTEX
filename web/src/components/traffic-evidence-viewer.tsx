@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
 import type { FindingTrafficDetail, TrafficDetail } from "@/lib/types";
+import { useLocale } from "@/lib/locale-provider";
 
 export function TrafficEvidenceViewer({
   findingId,
@@ -24,6 +25,7 @@ export function TrafficEvidenceViewer({
   contextTask?: string;
   onClose: () => void;
 }) {
+  const { t: ui } = useLocale();
   const [detail, setDetail] = React.useState<FindingTrafficDetail | null>(null);
   const [error, setError] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -71,9 +73,9 @@ export function TrafficEvidenceViewer({
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>流量证据 #{bindingId}</DialogTitle>
+          <DialogTitle>{ui("流量证据 #")}{bindingId}</DialogTitle>
           <DialogDescription className="break-all">
-            {detail?.binding.snapshot.url ?? "查看绑定时保存的请求与响应"}
+            {detail?.binding.snapshot.url ?? ui("查看绑定时保存的请求与响应")}
           </DialogDescription>
         </DialogHeader>
         {error ? (
@@ -83,14 +85,13 @@ export function TrafficEvidenceViewer({
         ) : detail ? (
           <Tabs defaultValue="request">
             <TabsList>
-              <TabsTrigger value="request">请求 Request</TabsTrigger>
-              <TabsTrigger value="response">响应 Response</TabsTrigger>
+              <TabsTrigger value="request">{ui("请求 Request")}</TabsTrigger>
+              <TabsTrigger value="response">{ui("响应 Response")}</TabsTrigger>
             </TabsList>
             {(["request", "response"] as const).map((side) => (
               <TabsContent key={side} value={side}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    正文 {detail[side].total.toLocaleString()} 字节{detail[side].truncated ? " · 当前为预览" : ""}
+                  <span className="text-xs text-muted-foreground">{ui("正文 ")}{detail[side].total.toLocaleString()}{ui(" 字节")}{detail[side].truncated ? ui(" · 当前为预览") : ""}
                   </span>
                   <Button
                     variant="outline"
@@ -100,17 +101,13 @@ export function TrafficEvidenceViewer({
                         .downloadFindingTrafficBody(findingId, detail.binding.id, side, contextTask)
                         .catch((e: Error) => toast.error(e.message))
                     }
-                  >
-                    下载完整{side === "request" ? "请求" : "响应"}正文
-                  </Button>
+                  >{ui("下载完整")}{side === "request" ? ui("请求") : ui("响应")}{ui("正文")}</Button>
                 </div>
                 <HttpCodeBlock
                   raw={`${(side === "request" ? detail.binding.snapshot.req_head : detail.binding.snapshot.resp_head)?.trimEnd() ?? ""}\n\n${detail[side].content}`}
                 />
                 {detail[side].truncated && !detail[side].binary ? (
-                  <Button variant="outline" size="sm" disabled={busy} onClick={() => void more(side)}>
-                    加载更多正文
-                  </Button>
+                  <Button variant="outline" size="sm" disabled={busy} onClick={() => void more(side)}>{ui("加载更多正文")}</Button>
                 ) : null}
               </TabsContent>
             ))}
@@ -124,6 +121,7 @@ export function TrafficEvidenceViewer({
 }
 
 export function CapturedTrafficViewer({ id, onClose }: { id: string | null; onClose: () => void }) {
+  const { t: ui } = useLocale();
   const [detail, setDetail] = React.useState<TrafficDetail | null>(null);
   const [error, setError] = React.useState("");
   React.useEffect(() => {
@@ -152,8 +150,8 @@ export function CapturedTrafficViewer({ id, onClose }: { id: string | null; onCl
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>预览流量</DialogTitle>
-          <DialogDescription>流量 ID：{id}。绑定时会保存完整正文。</DialogDescription>
+          <DialogTitle>{ui("预览流量")}</DialogTitle>
+          <DialogDescription>{ui("流量 ID：")}{id}{ui("。绑定时会保存完整正文。")}</DialogDescription>
         </DialogHeader>
         {error ? (
           <Alert variant="destructive">
@@ -162,8 +160,8 @@ export function CapturedTrafficViewer({ id, onClose }: { id: string | null; onCl
         ) : detail ? (
           <Tabs defaultValue="request">
             <TabsList>
-              <TabsTrigger value="request">请求 Request</TabsTrigger>
-              <TabsTrigger value="response">响应 Response</TabsTrigger>
+              <TabsTrigger value="request">{ui("请求 Request")}</TabsTrigger>
+              <TabsTrigger value="response">{ui("响应 Response")}</TabsTrigger>
             </TabsList>
             <TabsContent value="request">
               <HttpCodeBlock raw={detail.req} />

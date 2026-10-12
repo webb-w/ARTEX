@@ -5,10 +5,12 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { persistPreference } from "@/lib/preferences/preferences-storage";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
+import { useLocale } from "@/lib/locale-provider";
 
 const THEME_CYCLE = ["light", "dark", "system"] as const;
 
 export function ThemeSwitcher() {
+  const { t: ui, locale } = useLocale();
   const themeMode = usePreferencesStore((s) => s.themeMode);
   const setThemeMode = usePreferencesStore((s) => s.setThemeMode);
 
@@ -21,7 +23,7 @@ export function ThemeSwitcher() {
   };
 
   return (
-    <Button size="icon" onClick={cycleTheme} aria-label={`Current theme: ${themeMode}. Click to cycle themes`}>
+    <Button size="icon" onClick={cycleTheme} aria-label={ui("Current theme: {0}. Click to cycle themes", locale === "ko-KR" ? ui({ light: "Light", dark: "Dark", system: "System" }[themeMode]) : themeMode)}>
       {/* SYSTEM */}
       <Monitor className="hidden [html[data-theme-mode=system]_&]:block" />
 

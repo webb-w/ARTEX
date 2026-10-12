@@ -7,6 +7,7 @@ import { sseUrl } from "@/lib/api";
 import { MOCK } from "@/lib/mock/enabled";
 import type { LogLine } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-provider";
 
 // Mock demo：无后端 SSE，塞几行示例日志。
 const MOCK_LOGS: LogLine[] = [
@@ -37,6 +38,7 @@ function fmtTime(ts: string) {
 }
 
 export default function LogsPage() {
+  const { t: ui } = useLocale();
   const [lines, setLines] = React.useState<LogLine[]>([]);
   const [q, setQ] = React.useState("");
   const [level, setLevel] = React.useState<"all" | LogLine["level"]>("all");
@@ -142,13 +144,13 @@ export default function LogsPage() {
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">系统日志</h1>
-        <p className="text-muted-foreground text-sm">后端实时日志流(planner / worker / 数据库 / 流量 …)</p>
+        <h1 className="text-xl font-semibold tracking-tight">{ui("系统日志")}</h1>
+        <p className="text-muted-foreground text-sm">{ui("后端实时日志流(planner / worker / 数据库 / 流量 …)")}</p>
       </div>
       <div className="flex flex-1 flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Input
-            placeholder="过滤(文本 / tag)…"
+            placeholder={ui("过滤(文本 / tag)…")}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="h-8 max-w-xs"
@@ -162,7 +164,7 @@ export default function LogsPage() {
                 className="h-8"
                 onClick={() => setLevel(lv)}
               >
-                {lv === "all" ? "全部" : lv}
+                {lv === "all" ? ui("全部") : lv}
               </Button>
             ))}
           </div>
@@ -172,15 +174,13 @@ export default function LogsPage() {
             className="h-8"
             onClick={() => setPaused((p) => !p)}
           >
-            {paused ? "已暂停" : "暂停"}
+            {paused ? ui("已暂停") : ui("暂停")}
           </Button>
-          <Button size="sm" variant="outline" className="h-8" onClick={() => setLines([])}>
-            清空
-          </Button>
+          <Button size="sm" variant="outline" className="h-8" onClick={() => setLines([])}>{ui("清空")}</Button>
           <span className="ml-auto text-xs text-muted-foreground">
-            {counts.total} 行 ·{" "}
-            <span className="text-amber-600 dark:text-amber-400">{counts.warn} 警告</span> ·{" "}
-            <span className="text-red-600 dark:text-red-400">{counts.error} 错误</span>
+            {counts.total}{ui(" 行 ·")}{" "}
+            <span className="text-amber-600 dark:text-amber-400">{counts.warn}{ui(" 警告")}</span> ·{" "}
+            <span className="text-red-600 dark:text-red-400">{counts.error}{ui(" 错误")}</span>
           </span>
         </div>
 
@@ -200,12 +200,12 @@ export default function LogsPage() {
                 disabled={loadingHistory}
                 onClick={loadOlderHistory}
               >
-                {loadingHistory ? "加载中…" : "加载更早日志"}
+                {loadingHistory ? ui("加载中…") : ui("加载更早日志")}
               </Button>
             </div>
           )}
           {filtered.length === 0 ? (
-            <p className="py-10 text-center text-muted-foreground">暂无日志。</p>
+            <p className="py-10 text-center text-muted-foreground">{ui("暂无日志。")}</p>
           ) : (
             filtered.map((l) => {
               const body =

@@ -1,5 +1,6 @@
 "use client";
 
+import type { UiTranslator } from "@/lib/locale";
 import * as React from "react";
 
 import { BanIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
@@ -18,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import type { AssetInterceptKind, AssetInterceptRule } from "@/lib/types";
+import { useLocale, useUiEventTranslator } from "@/lib/locale-provider";
 
 // ---- kind 元信息 ----
 
@@ -38,6 +40,7 @@ const KIND_LABEL: Record<AssetInterceptKind, string> = Object.fromEntries(
 const KIND_GROUPS = ["全等匹配", "模糊匹配", "网段"];
 
 function KindBadge({ kind }: { kind: AssetInterceptKind }) {
+ const { t: ui } = useLocale();
   const fuzzy = kind.startsWith("fuzzy_");
   const cidr = kind === "cidr";
   return (
@@ -51,7 +54,7 @@ function KindBadge({ kind }: { kind: AssetInterceptKind }) {
             : "border-emerald-400 text-emerald-600"
       }
     >
-      {KIND_LABEL[kind]}
+      {Object.hasOwn(KIND_LABEL, kind) ? ui(KIND_LABEL[kind]) : kind}
     </Badge>
   );
 }
@@ -78,11 +81,11 @@ type RuleForm = {
 const defaultForm = (): RuleForm => ({ enabled: true, kind: "fuzzy_domain", pattern: "", note: "" });
 
 // 前端轻校验（与后端一致：仅 exact_ip / cidr 做格式校验，其余交后端）。
-function frontValidate(form: RuleForm): string | null {
+function frontValidate(ui: UiTranslator, form: RuleForm): string | null {
   const p = form.pattern.trim();
-  if (!p) return "匹配内容不能为空";
+  if (!p) return ui("匹配内容不能为空");
   if (form.kind === "cidr" && !/^[0-9a-fA-F:.]+\/\d{1,3}$/.test(p)) {
-    return "CIDR 格式无效，形如 192.168.0.0/16";
+    return ui("CIDR 格式无效，形如 192.168.0.0/16");
   }
   return null;
 }
@@ -90,6 +93,8 @@ function frontValidate(form: RuleForm): string | null {
 // ---- page ----
 
 export default function AssetInterceptPage() {
+  const { t: ui } = useLocale();
+  const loadUi = useUiEventTranslator();
   const [rules, setRules] = React.useState<AssetInterceptRule[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [open, setOpen] = React.useState(false);
@@ -101,11 +106,11 @@ export default function AssetInterceptPage() {
     try {
       setRules(await api.assetInterceptRules());
     } catch {
-      toast.error("加载资产拦截规则失败");
+      toast.error(loadUi("加载资产拦截规则失败"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadUi]);
 
   React.useEffect(() => {
     load();
@@ -128,7 +133,7 @@ export default function AssetInterceptPage() {
   }
 
   async function handleSave() {
-    const err = frontValidate(form);
+    const err = frontValidate(ui, form);
     if (err) {
       toast.error(err);
       return;
@@ -138,10 +143,10 @@ export default function AssetInterceptPage() {
     try {
       if (editing) {
         await api.updateAssetInterceptRule(editing.id, payload);
-        toast.success("规则已更新");
+        toast.success(ui("规则已更新"));
       } else {
         await api.createAssetInterceptRule(payload);
-        toast.success("规则已创建");
+        toast.success(ui("规则已创建"));
       }
       setOpen(false);
       load();
@@ -153,10 +158,10 @@ export default function AssetInterceptPage() {
   }
 
   async function handleDelete(rule: AssetInterceptRule) {
-    if (!window.confirm(`确定删除资产拦截规则「${rule.pattern}」？`)) return;
+    if (!window.confirm(ui("确定删除资产拦截规则「{0}」？", rule.pattern))) return;
     try {
       await api.deleteAssetInterceptRule(rule.id);
-      toast.success("规则已删除");
+      toast.success(ui("规则已删除"));
       load();
     } catch (e) {
       toast.error((e as Error).message);
@@ -180,45 +185,36 @@ export default function AssetInterceptPage() {
       <div className="flex items-center gap-2.5">
         <BanIcon className="h-5 w-5 shrink-0" />
         <div>
-          <h1 className="text-lg font-semibold leading-tight">资产拦截</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            全局资产黑名单：命中的域名 / IP / URL / 网段将被拦截，不对其执行任何操作
-          </p>
+          <h1 className="text-lg font-semibold leading-tight">{ui("资产拦截")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{ui("全局资产黑名单：命中的域名 / IP / URL / 网段将被拦截，不对其执行任何操作")}</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
-          支持全等与模糊匹配的域名 / IP / URL，以及 CIDR 网段；默认内置模糊拦截政府（.gov / .gov.cn）与教育（.edu /
-          .edu.cn）网站
-        </p>
+        <p className="text-xs text-muted-foreground">{ui("支持全等与模糊匹配的域名 / IP / URL，以及 CIDR 网段；默认内置模糊拦截政府（.gov / .gov.cn）与教育（.edu / .edu.cn）网站")}</p>
         <Button onClick={openNew} size="sm" className="shrink-0">
-          <PlusIcon className="h-4 w-4" />
-          新建规则
-        </Button>
+          <PlusIcon className="h-4 w-4" />{ui("新建规则")}</Button>
       </div>
 
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <p className="p-6 text-sm text-muted-foreground">加载中…</p>
+            <p className="p-6 text-sm text-muted-foreground">{ui("加载中…")}</p>
           ) : rules.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
               <BanIcon className="h-8 w-8 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">暂无资产拦截规则</p>
+              <p className="text-sm text-muted-foreground">{ui("暂无资产拦截规则")}</p>
               <Button size="sm" variant="outline" onClick={openNew}>
-                <PlusIcon className="h-4 w-4" />
-                新建第一条规则
-              </Button>
+                <PlusIcon className="h-4 w-4" />{ui("新建第一条规则")}</Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[130px]">类型</TableHead>
-                  <TableHead>匹配内容</TableHead>
-                  <TableHead>备注</TableHead>
-                  <TableHead className="w-[64px] text-center">启用</TableHead>
+                  <TableHead className="w-[130px]">{ui("类型")}</TableHead>
+                  <TableHead>{ui("匹配内容")}</TableHead>
+                  <TableHead>{ui("备注")}</TableHead>
+                  <TableHead className="w-[64px] text-center">{ui("启用")}</TableHead>
                   <TableHead className="w-[80px]" />
                 </TableRow>
               </TableHeader>
@@ -236,9 +232,7 @@ export default function AssetInterceptPage() {
                     <TableCell className="text-sm text-muted-foreground">
                       <div className="flex items-center gap-1.5">
                         {rule.builtin && (
-                          <Badge variant="secondary" className="shrink-0 px-1 py-0 text-[10px]">
-                            内置
-                          </Badge>
+                          <Badge variant="secondary" className="shrink-0 px-1 py-0 text-[10px]">{ui("内置")}</Badge>
                         )}
                         <span className="truncate">{rule.note}</span>
                       </div>
@@ -273,12 +267,12 @@ export default function AssetInterceptPage() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="flex flex-col gap-0 p-0 sm:max-w-md">
           <SheetHeader className="border-b px-6 py-4">
-            <SheetTitle>{editing ? "编辑资产拦截规则" : "新建资产拦截规则"}</SheetTitle>
-            <SheetDescription className="text-xs">命中此规则的目标资产会被全局拦截</SheetDescription>
+            <SheetTitle>{editing ? ui("编辑资产拦截规则") : ui("新建资产拦截规则")}</SheetTitle>
+            <SheetDescription className="text-xs">{ui("命中此规则的目标资产会被全局拦截")}</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
-            <Field label="匹配类型">
+            <Field label={ui("匹配类型")}>
               <Select value={form.kind} onValueChange={(v) => set({ kind: v as AssetInterceptKind })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -291,7 +285,7 @@ export default function AssetInterceptPage() {
                       </div>
                       {KIND_OPTIONS.filter((o) => o.group === g).map((o) => (
                         <SelectItem key={o.value} value={o.value}>
-                          {o.label}
+                          {ui(o.label)}
                         </SelectItem>
                       ))}
                     </React.Fragment>
@@ -301,13 +295,13 @@ export default function AssetInterceptPage() {
             </Field>
 
             <Field
-              label="匹配内容"
+              label={ui("匹配内容")}
               hint={
                 form.kind === "cidr"
-                  ? "CIDR 网段，形如 192.168.0.0/16"
+                  ? ui("CIDR 网段，形如 192.168.0.0/16")
                   : form.kind.startsWith("fuzzy_")
-                    ? "模糊匹配：目标包含此内容即命中"
-                    : "全等匹配：目标需与此内容完全一致"
+                    ? ui("模糊匹配：目标包含此内容即命中")
+                    : ui("全等匹配：目标需与此内容完全一致")
               }
             >
               <Input
@@ -317,9 +311,9 @@ export default function AssetInterceptPage() {
               />
             </Field>
 
-            <Field label="备注（可选）">
+            <Field label={ui("备注（可选）")}>
               <Textarea
-                placeholder="说明这条规则的用途"
+                placeholder={ui("说明这条规则的用途")}
                 value={form.note}
                 onChange={(e) => set({ note: e.target.value })}
                 rows={2}
@@ -331,18 +325,14 @@ export default function AssetInterceptPage() {
 
             <div className="flex items-center gap-3">
               <Switch id="asset-rule-enabled" checked={form.enabled} onCheckedChange={(v) => set({ enabled: v })} />
-              <Label htmlFor="asset-rule-enabled" className="cursor-pointer">
-                启用此规则
-              </Label>
+              <Label htmlFor="asset-rule-enabled" className="cursor-pointer">{ui("启用此规则")}</Label>
             </div>
           </div>
 
           <SheetFooter className="border-t px-6 py-4 flex-row justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              取消
-            </Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{ui("取消")}</Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? "保存中…" : "保存"}
+              {saving ? ui("保存中…") : ui("保存")}
             </Button>
           </SheetFooter>
         </SheetContent>

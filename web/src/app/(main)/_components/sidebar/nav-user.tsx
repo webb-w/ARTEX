@@ -18,6 +18,7 @@ import { auth } from "@/lib/auth";
 import { getInitials } from "@/lib/utils";
 
 import { ChangePasswordDialog } from "./change-password-dialog";
+import { useLocale } from "@/lib/locale-provider";
 
 export function NavUser({
   user,
@@ -28,6 +29,7 @@ export function NavUser({
     readonly avatar: string;
   };
 }) {
+  const { t: ui } = useLocale();
   const { isMobile } = useSidebar();
   const [pwOpen, setPwOpen] = React.useState(false);
 
@@ -78,14 +80,10 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setPwOpen(true)}>
-              <KeyRound />
-              修改密码
-            </DropdownMenuItem>
+              <KeyRound />{ui("修改密码")}</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-              <LogOut />
-              退出登录
-            </DropdownMenuItem>
+              <LogOut />{ui("退出登录")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

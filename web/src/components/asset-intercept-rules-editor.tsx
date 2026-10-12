@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import type { AssetInterceptKind, AssetInterceptRuleInput } from "@/lib/types";
+import { useLocale } from "@/lib/locale-provider";
 
 // 用 NativeSelect（原生 <select>）而非 shadcn Select：这个编辑器会用在 Sheet 抽屉内，
 // shadcn Select 的下拉 portal 到 body、点击外部会触发抽屉的「点击外部关闭」误关；原生下拉无此问题。
@@ -34,6 +35,7 @@ export function AssetInterceptRulesEditor({
   value: AssetInterceptRuleInput[];
   onChange: (v: AssetInterceptRuleInput[]) => void;
 }) {
+  const { t: ui } = useLocale();
   function update(i: number, patch: Partial<AssetInterceptRuleInput>) {
     onChange(value.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
@@ -56,8 +58,8 @@ export function AssetInterceptRulesEditor({
               value={r.action}
               onChange={(e) => update(i, { action: e.target.value as "block" | "allow" })}
             >
-              <NativeSelectOption value="block">拦截</NativeSelectOption>
-              <NativeSelectOption value="allow">允许</NativeSelectOption>
+              <NativeSelectOption value="block">{ui("拦截")}</NativeSelectOption>
+              <NativeSelectOption value="allow">{ui("允许")}</NativeSelectOption>
             </NativeSelect>
             <NativeSelect
               size="sm"
@@ -67,7 +69,7 @@ export function AssetInterceptRulesEditor({
             >
               {ASSET_INTERCEPT_KIND_OPTIONS.map((o) => (
                 <NativeSelectOption key={o.value} value={o.value}>
-                  {o.label}
+                  {ui(o.label)}
                 </NativeSelectOption>
               ))}
             </NativeSelect>
@@ -79,7 +81,7 @@ export function AssetInterceptRulesEditor({
             />
             <Input
               className="w-[120px] shrink-0"
-              placeholder="备注(可选)"
+              placeholder={ui("备注(可选)")}
               value={r.note}
               onChange={(e) => update(i, { note: e.target.value })}
             />
@@ -96,8 +98,7 @@ export function AssetInterceptRulesEditor({
         );
       })}
       <Button type="button" size="sm" variant="outline" className="w-fit" onClick={add}>
-        <PlusIcon className="size-4" /> 添加一条
-      </Button>
+        <PlusIcon className="size-4" />{ui(" 添加一条")}</Button>
     </div>
   );
 }

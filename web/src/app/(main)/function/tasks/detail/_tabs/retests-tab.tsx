@@ -1,5 +1,6 @@
 "use client";
 
+import type { UiTranslator } from "@/lib/locale";
 import * as React from "react";
 
 import Link from "next/link";
@@ -16,14 +17,16 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import type { Finding, FindingsPage } from "@/lib/types";
+import { useLocale } from "@/lib/locale-provider";
 
 const PAGE_SIZE = 20;
 
-function findingLabel(finding: Finding) {
-  return finding.name?.trim() || finding.vulnclass.trim() || "未分类";
+function findingLabel(ui: UiTranslator, finding: Finding) {
+  return finding.name?.trim() || finding.vulnclass.trim() || ui("未分类");
 }
 
 export function RetestsTab({ taskId }: { taskId: string }) {
+  const { t: ui } = useLocale();
   const [page, setPage] = React.useState(1);
   const [data, setData] = React.useState<FindingsPage | null>(null);
   const [selectedId, setSelectedId] = React.useState("");
@@ -72,19 +75,16 @@ export function RetestsTab({ taskId }: { taskId: string }) {
     <div className="flex flex-col gap-4">
       {error ? (
         <Alert variant="destructive">
-          <AlertDescription>
-            加载任务漏洞失败：{error}
-            <Button variant="outline" size="sm" onClick={refresh}>
-              重试
-            </Button>
+          <AlertDescription>{ui("加载任务漏洞失败：")}{error}
+            <Button variant="outline" size="sm" onClick={refresh}>{ui("重试")}</Button>
           </AlertDescription>
         </Alert>
       ) : null}
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]">
         <Card className="min-w-0">
           <CardHeader>
-            <CardTitle>选择漏洞{data ? ` · ${data.total}` : ""}</CardTitle>
-            <CardDescription>查看本任务漏洞的复测记录，或发起新的复测。</CardDescription>
+            <CardTitle>{ui("选择漏洞")}{data ? ` · ${data.total}` : ""}</CardTitle>
+            <CardDescription>{ui("查看本任务漏洞的复测记录，或发起新的复测。")}</CardDescription>
           </CardHeader>
           <CardContent className="flex max-h-[32rem] flex-col overflow-y-auto">
             {!loaded && !error ? <Skeleton className="h-24 w-full" /> : null}
@@ -94,11 +94,11 @@ export function RetestsTab({ taskId }: { taskId: string }) {
                 <Button
                   variant={finding.id === selectedId ? "secondary" : "ghost"}
                   className="h-auto w-full shrink-0 flex-col items-start gap-2 whitespace-normal py-3 text-left"
-                  aria-label={`选择漏洞：${findingLabel(finding)}`}
+                  aria-label={ui("选择漏洞：{0}", findingLabel(ui, finding))}
                   aria-pressed={finding.id === selectedId}
                   onClick={() => setSelectedId(finding.id)}
                 >
-                  <span className="line-clamp-2 break-words">{findingLabel(finding)}</span>
+                  <span className="line-clamp-2 break-words">{findingLabel(ui, finding)}</span>
                   <span className="flex flex-wrap items-center gap-2">
                     <StatusBadge domain="severity" value={finding.severity} dot />
                     <StatusBadge domain="finding" value={finding.status} dot />
@@ -109,8 +109,8 @@ export function RetestsTab({ taskId }: { taskId: string }) {
             {loaded && findings.length === 0 ? (
               <Empty>
                 <EmptyHeader>
-                  <EmptyTitle>暂无可复测漏洞</EmptyTitle>
-                  <EmptyDescription>本任务发现漏洞后，可在这里手动发起复测。</EmptyDescription>
+                  <EmptyTitle>{ui("暂无可复测漏洞")}</EmptyTitle>
+                  <EmptyDescription>{ui("本任务发现漏洞后，可在这里手动发起复测。")}</EmptyDescription>
                 </EmptyHeader>
               </Empty>
             ) : null}
@@ -120,19 +120,17 @@ export function RetestsTab({ taskId }: { taskId: string }) {
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="上一页漏洞"
+                aria-label={ui("上一页漏洞")}
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
               >
                 <ChevronLeftIcon />
               </Button>
-              <span className="text-muted-foreground text-xs">
-                第 {page} / {Math.ceil(data.total / PAGE_SIZE)} 页
-              </span>
+              <span className="text-muted-foreground text-xs">{ui("第 ")}{page} / {Math.ceil(data.total / PAGE_SIZE)}{ui(" 页")}</span>
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="下一页漏洞"
+                aria-label={ui("下一页漏洞")}
                 disabled={page * PAGE_SIZE >= data.total}
                 onClick={() => setPage(page + 1)}
               >
@@ -145,10 +143,9 @@ export function RetestsTab({ taskId }: { taskId: string }) {
           <div className="flex min-w-0 flex-col gap-4">
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="min-w-0 flex-1 break-words font-medium">{findingLabel(selected)}</h2>
+                <h2 className="min-w-0 flex-1 break-words font-medium">{findingLabel(ui, selected)}</h2>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href={`/function/findings/detail?id=${selected.finding_id || selected.id}`}>
-                    漏洞详情 <ArrowUpRightIcon data-icon="inline-end" />
+                  <Link href={`/function/findings/detail?id=${selected.finding_id || selected.id}`}>{ui("漏洞详情 ")}<ArrowUpRightIcon data-icon="inline-end" />
                   </Link>
                 </Button>
               </div>
@@ -157,7 +154,7 @@ export function RetestsTab({ taskId }: { taskId: string }) {
             <FindingRetestPanel
               key={selected.id}
               findingId={selected.finding_id || selected.id}
-              findingName={findingLabel(selected)}
+              findingName={findingLabel(ui, selected)}
               onCompleted={refresh}
             />
           </div>

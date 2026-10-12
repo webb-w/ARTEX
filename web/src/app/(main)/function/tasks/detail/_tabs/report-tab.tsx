@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { copyText } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-provider";
 
 export function ReportTab({ taskId }: { taskId: string }) {
+  const { t: ui } = useLocale();
   const [report, setReport] = React.useState<string>("");
   const [loading, setLoading] = React.useState(true);
   const [copied, setCopied] = React.useState(false);
@@ -40,10 +42,10 @@ export function ReportTab({ taskId }: { taskId: string }) {
     const ok = await copyText(report);
     if (ok) {
       setCopied(true);
-      toast.success("已复制 Markdown");
+      toast.success(ui("已复制 Markdown"));
       setTimeout(() => setCopied(false), 1500);
     } else {
-      toast.error("复制失败，请手动选择文本复制");
+      toast.error(ui("复制失败，请手动选择文本复制"));
     }
   }
 
@@ -51,9 +53,7 @@ export function ReportTab({ taskId }: { taskId: string }) {
   if (loading) {
     content = (
       <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-16 text-muted-foreground text-sm">
-        <FileTextIcon className="size-8 opacity-40" />
-        加载中…
-      </div>
+        <FileTextIcon className="size-8 opacity-40" />{ui("加载中…")}</div>
     );
   } else if (report) {
     content = (
@@ -64,9 +64,7 @@ export function ReportTab({ taskId }: { taskId: string }) {
   } else {
     content = (
       <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-16 text-muted-foreground text-sm">
-        <FileTextIcon className="size-8 opacity-40" />
-        暂无报告
-      </div>
+        <FileTextIcon className="size-8 opacity-40" />{ui("暂无报告")}</div>
     );
   }
 
@@ -74,13 +72,11 @@ export function ReportTab({ taskId }: { taskId: string }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <FileTextIcon className="size-4" /> 渗透测试报告（Markdown）
-        </CardTitle>
+          <FileTextIcon className="size-4" />{ui(" 渗透测试报告（Markdown）")}</CardTitle>
         <div className="flex gap-2">
           {report && (
             <Button size="sm" variant="outline" onClick={copy}>
-              {copied ? <CheckIcon /> : <CopyIcon />} 复制
-            </Button>
+              {copied ? <CheckIcon /> : <CopyIcon />}{ui(" 复制")}</Button>
           )}
         </div>
       </CardHeader>

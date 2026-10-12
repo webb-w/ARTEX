@@ -1,3 +1,6 @@
+"use client";
+
+import { useLocale } from "@/lib/locale-provider";
 import { cn } from "@/lib/utils";
 import {
   statusMeta,
@@ -18,7 +21,8 @@ export function StatusBadge({
   dot?: boolean;
   className?: string;
 }) {
-  const meta = statusMeta(domain, value);
+  const { locale } = useLocale();
+  const meta = statusMeta(domain, value, locale);
   return (
     <span
       className={cn(

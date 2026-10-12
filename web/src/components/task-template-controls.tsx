@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import type { AssetInterceptRuleInput, TaskCategory, TaskTemplate } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useLocale, useUiEventTranslator } from "@/lib/locale-provider";
 
 interface TemplateDraft {
   name: string;
@@ -84,6 +85,7 @@ function TaskTemplateManager({
   onUpdated,
   onDeleted,
 }: TaskTemplateManagerProps) {
+  const { t: ui } = useLocale();
   const [selectedID, setSelectedID] = React.useState<number | null>(null);
   const [draft, setDraft] = React.useState<TemplateDraft>(emptyDraft);
   const [saving, setSaving] = React.useState(false);
@@ -151,7 +153,7 @@ function TaskTemplateManager({
         .filter((r) => r.pattern !== ""),
     };
     if (!input.name || !input.description || !input.goal) {
-      toast.error("请填写模板名称、描述和目标");
+      toast.error(ui("请填写模板名称、描述和目标"));
       return;
     }
     setSaving(true);
@@ -161,15 +163,15 @@ function TaskTemplateManager({
         onCreated(created);
         setSelectedID(created.id);
         setDraft(templateDraft(created));
-        toast.success("模板已创建");
+        toast.success(ui("模板已创建"));
       } else {
         const updated = await api.updateTaskTemplate(selectedID, input);
         onUpdated(updated);
         setDraft(templateDraft(updated));
-        toast.success("模板已更新");
+        toast.success(ui("模板已更新"));
       }
     } catch (error) {
-      toast.error(`保存失败：${(error as Error).message}`);
+      toast.error(ui("保存失败：{0}", (error as Error).message));
     } finally {
       setSaving(false);
     }
@@ -190,35 +192,33 @@ function TaskTemplateManager({
         startNew();
       }
       setDeleteOpen(false);
-      toast.success("模板已删除");
+      toast.success(ui("模板已删除"));
     } catch (error) {
-      toast.error(`删除失败：${(error as Error).message}`);
+      toast.error(ui("删除失败：{0}", (error as Error).message));
     } finally {
       setDeleting(false);
     }
   }
 
-  let saveLabel = saving ? "保存中" : "保存修改";
-  if (!saving && selectedID == null) saveLabel = "创建模板";
+  let saveLabel = saving ? ui("保存中") : ui("保存修改");
+  if (!saving && selectedID == null) saveLabel = ui("创建模板");
 
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="grid h-full w-full! max-w-none! grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:w-[48rem]! sm:max-w-[48rem]!">
           <SheetHeader className="border-b px-6 py-5">
-            <SheetTitle>任务模板管理</SheetTitle>
-            <SheetDescription>模板保存描述、目标、分类与任务级拦截/允许规则；修改不会影响已经创建的任务。</SheetDescription>
+            <SheetTitle>{ui("任务模板管理")}</SheetTitle>
+            <SheetDescription>{ui("模板保存描述、目标、分类与任务级拦截/允许规则；修改不会影响已经创建的任务。")}</SheetDescription>
           </SheetHeader>
           <div className="grid min-h-0 overflow-y-auto lg:grid-cols-[15rem_minmax(0,1fr)] lg:overflow-hidden">
             <div className="flex min-h-0 flex-col border-b p-3 lg:border-r lg:border-b-0">
               <Button type="button" variant="outline" className="w-full" onClick={startNew}>
-                <PlusIcon data-icon="inline-start" />
-                新建模板
-              </Button>
+                <PlusIcon data-icon="inline-start" />{ui("新建模板")}</Button>
               <ScrollArea className="mt-2 max-h-44 lg:max-h-none lg:flex-1">
                 <div className="flex flex-col gap-1 pr-2">
                   {templates.length === 0 && (
-                    <p className="px-2 py-6 text-center text-muted-foreground text-sm">暂无模板</p>
+                    <p className="px-2 py-6 text-center text-muted-foreground text-sm">{ui("暂无模板")}</p>
                   )}
                   {templates.map((template) => (
                     <button
@@ -240,37 +240,37 @@ function TaskTemplateManager({
             <ScrollArea className="min-h-0">
               <FieldGroup className="p-6">
                 <Field>
-                  <FieldLabel htmlFor="task-template-name">模板名称</FieldLabel>
+                  <FieldLabel htmlFor="task-template-name">{ui("模板名称")}</FieldLabel>
                   <Input
                     id="task-template-name"
                     value={draft.name}
                     maxLength={120}
-                    placeholder="例如：外部 Web 渗透"
+                    placeholder={ui("例如：外部 Web 渗透")}
                     onChange={(event) => updateDraft("name", event.target.value)}
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="task-template-description">描述</FieldLabel>
+                  <FieldLabel htmlFor="task-template-description">{ui("描述")}</FieldLabel>
                   <Textarea
                     id="task-template-description"
                     className="min-h-28"
                     value={draft.description}
-                    placeholder="测试对象与背景"
+                    placeholder={ui("测试对象与背景")}
                     onChange={(event) => updateDraft("description", event.target.value)}
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="task-template-goal">目标</FieldLabel>
+                  <FieldLabel htmlFor="task-template-goal">{ui("目标")}</FieldLabel>
                   <Textarea
                     id="task-template-goal"
                     className="min-h-28"
                     value={draft.goal}
-                    placeholder="任务需要达成的目标"
+                    placeholder={ui("任务需要达成的目标")}
                     onChange={(event) => updateDraft("goal", event.target.value)}
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="task-template-category">任务分类</FieldLabel>
+                  <FieldLabel htmlFor="task-template-category">{ui("任务分类")}</FieldLabel>
                   <NativeSelect
                     id="task-template-category"
                     className="w-full"
@@ -279,24 +279,22 @@ function TaskTemplateManager({
                       patchDraft({ categoryID: event.target.value === "" ? null : Number(event.target.value) })
                     }
                   >
-                    <NativeSelectOption value="">未分类</NativeSelectOption>
+                    <NativeSelectOption value="">{ui("未分类")}</NativeSelectOption>
                     {categories.map((c) => (
                       <NativeSelectOption key={c.id} value={String(c.id)}>
                         {c.name}
                       </NativeSelectOption>
                     ))}
                   </NativeSelect>
-                  <FieldDescription>应用模板时预填此分类（可再改）。</FieldDescription>
+                  <FieldDescription>{ui("应用模板时预填此分类（可再改）。")}</FieldDescription>
                 </Field>
                 <Field>
-                  <FieldLabel>任务级拦截 / 允许规则</FieldLabel>
+                  <FieldLabel>{ui("任务级拦截 / 允许规则")}</FieldLabel>
                   <AssetInterceptRulesEditor
                     value={draft.interceptRules}
                     onChange={(rules) => patchDraft({ interceptRules: rules })}
                   />
-                  <FieldDescription>
-                    应用模板时预填这些任务级规则（拦截/允许，仅对新任务生效，不进全局）。
-                  </FieldDescription>
+                  <FieldDescription>{ui("应用模板时预填这些任务级规则（拦截/允许，仅对新任务生效，不进全局）。")}</FieldDescription>
                 </Field>
               </FieldGroup>
             </ScrollArea>
@@ -304,13 +302,9 @@ function TaskTemplateManager({
           <SheetFooter className="border-t px-6 py-4 sm:flex-row sm:items-center">
             {selectedID != null && (
               <Button type="button" variant="destructive" className="sm:mr-auto" onClick={() => setDeleteOpen(true)}>
-                <Trash2Icon data-icon="inline-start" />
-                删除模板
-              </Button>
+                <Trash2Icon data-icon="inline-start" />{ui("删除模板")}</Button>
             )}
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              关闭
-            </Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{ui("关闭")}</Button>
             <Button type="button" disabled={saving} onClick={() => void save()}>
               {saving ? <Spinner data-icon="inline-start" /> : <SaveIcon data-icon="inline-start" />}
               {saveLabel}
@@ -321,11 +315,11 @@ function TaskTemplateManager({
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>删除模板「{draft.name || "未命名模板"}」？</AlertDialogTitle>
-            <AlertDialogDescription>已由该模板创建的任务不会受到影响。</AlertDialogDescription>
+            <AlertDialogTitle>{ui("删除模板「")}{draft.name || ui("未命名模板")}」？</AlertDialogTitle>
+            <AlertDialogDescription>{ui("已由该模板创建的任务不会受到影响。")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>取消</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{ui("取消")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deleting}
@@ -335,7 +329,7 @@ function TaskTemplateManager({
               }}
             >
               {deleting && <Spinner data-icon="inline-start" />}
-              {deleting ? "删除中" : "删除"}
+              {deleting ? ui("删除中") : ui("删除")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -365,6 +359,8 @@ export function TaskTemplateControls({
   onApply,
   portalContainer,
 }: TaskTemplateControlsProps) {
+  const { t: ui } = useLocale();
+  const loadUi = useUiEventTranslator();
   const [templates, setTemplates] = React.useState<TaskTemplate[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [templateInputValue, setTemplateInputValue] = React.useState("");
@@ -378,11 +374,11 @@ export function TaskTemplateControls({
       setTemplates(await api.taskTemplates());
     } catch (error) {
       setTemplates([]);
-      toast.error(`加载模板失败：${(error as Error).message}`);
+      toast.error(loadUi("加载模板失败：{0}", (error as Error).message));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadUi]);
 
   React.useEffect(() => {
     void loadTemplates();
@@ -433,19 +429,17 @@ export function TaskTemplateControls({
     if (selectedTemplateID === id) onSelectedTemplateIDChange(null);
   };
 
-  let pickerPlaceholder = loading ? "正在加载模板" : "暂无任务模板";
-  if (!loading && templates.length > 0) pickerPlaceholder = "搜索并选择任务模板";
+  let pickerPlaceholder = loading ? ui("正在加载模板") : ui("暂无任务模板");
+  if (!loading && templates.length > 0) pickerPlaceholder = ui("搜索并选择任务模板");
 
   return (
     <>
       <Field>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <FieldLabel htmlFor="task-template-picker">任务模板</FieldLabel>
+          <FieldLabel htmlFor="task-template-picker">{ui("任务模板")}</FieldLabel>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => openManager(null)}>
-              <Settings2Icon data-icon="inline-start" />
-              管理模板
-            </Button>
+              <Settings2Icon data-icon="inline-start" />{ui("管理模板")}</Button>
             <Button
               type="button"
               variant="ghost"
@@ -460,9 +454,7 @@ export function TaskTemplateControls({
                 })
               }
             >
-              <SaveIcon data-icon="inline-start" />
-              另存为模板
-            </Button>
+              <SaveIcon data-icon="inline-start" />{ui("另存为模板")}</Button>
           </div>
         </div>
         <Combobox
@@ -482,7 +474,7 @@ export function TaskTemplateControls({
             showClear
           />
           <ComboboxContent portalContainer={portalContainer}>
-            <ComboboxEmpty>没有匹配的模板</ComboboxEmpty>
+            <ComboboxEmpty>{ui("没有匹配的模板")}</ComboboxEmpty>
             <ComboboxList>
               {(template) => (
                 <ComboboxItem key={template.id} value={template}>
@@ -498,7 +490,7 @@ export function TaskTemplateControls({
             </ComboboxList>
           </ComboboxContent>
         </Combobox>
-        <FieldDescription>选择后会复制模板的描述、目标、分类与任务级规则，不与模板保持关联。</FieldDescription>
+        <FieldDescription>{ui("选择后会复制模板的描述、目标、分类与任务级规则，不与模板保持关联。")}</FieldDescription>
       </Field>
 
       <AlertDialog
@@ -511,14 +503,12 @@ export function TaskTemplateControls({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>使用模板「{pendingTemplate?.name}」？</AlertDialogTitle>
-            <AlertDialogDescription>当前已填写的描述和目标将被模板内容覆盖。</AlertDialogDescription>
+            <AlertDialogTitle>{ui("使用模板「")}{pendingTemplate?.name}」？</AlertDialogTitle>
+            <AlertDialogDescription>{ui("当前已填写的描述和目标将被模板内容覆盖。")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={() => pendingTemplate && applyTemplate(pendingTemplate)}>
-              覆盖并使用
-            </AlertDialogAction>
+            <AlertDialogCancel>{ui("取消")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => pendingTemplate && applyTemplate(pendingTemplate)}>{ui("覆盖并使用")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
