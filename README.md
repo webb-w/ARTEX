@@ -11,6 +11,8 @@ AI 自主渗透测试系统（Go 后端 + Next.js 前端）
 
 </div>
 
+**Languages:** 简体中文 | [한국어](README.ko-KR.md)
+
 ---
 
 ## 截图预览
